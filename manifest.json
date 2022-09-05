@@ -1,0 +1,30 @@
+{
+    "minimum_chrome_version": "90",  	
+    "short_name": "Project Deserve",	
+    "name": "Project Deserve",
+    "version": "0.0.1",
+	"homepage_url": "https://comitfs.com",	
+    "description": "Everyyone deserves good healthcare",
+    "manifest_version": 3,
+    "permissions": [
+		"contextMenus",
+		"tabs",
+		"scripting"		
+    ],	
+	"host_permissions": ["https://github.com/"],		
+    "background": {
+    	"service_worker": "./background.js"
+  	}, 		
+	"action": {
+      "default_icon": {
+		"192": "./img/logo_192.png",
+		"32": "./img/logo_32.png"
+      }   
+	},	
+	"icons": {
+		"192": "./img/logo_192.png",
+		"32": "./img/logo_32.png"
+	},		
+    "default_locale": "en",	
+    "incognito": "not_allowed"
+  }

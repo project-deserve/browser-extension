@@ -1,0 +1,22 @@
+{
+    "browserAction_title": {
+        "message": "Project Deserve",
+        "description": "A pop-up title when user hovers on Browser Action button (browserAction_title)"
+    },
+    "manifest_extensionName": {
+        "message": "Project Deserve",
+        "description": "Extension name in the Manifest file (manifest_extensionName)"
+    },
+    "manifest_shortExtensionName": {
+        "message": "Project Deserve",
+        "description": "Short extension name in the Manifest file (manifest_shortExtensionName)"
+    },
+    "manifest_extensionDescription": {
+        "message": "Everyyone deserves good healthcare",
+        "description": "Extension description in the Manifest file (manifest_extensionDescription)"
+    },
+    "settings": {
+        "message": "Project Deserve",
+        "description": "Title for settings"
+    }
+}
