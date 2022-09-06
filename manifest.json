@@ -7,11 +7,19 @@
     "description": "Everyyone deserves good healthcare",
     "manifest_version": 3,
     "permissions": [
-		"contextMenus",
-		"tabs",
-		"scripting"		
+		"contextMenus"
     ],	
-	"host_permissions": ["https://github.com/"],		
+	"content_scripts": [
+	  {
+		"matches": [
+			"https://github.com/project-deserve/*",
+			"https://github.com/orgs/project-deserve/*",
+			"https://github.com/organizations/project-deserve/*"
+		],
+		"js": ["./webcomponents-bundle.js", "./tingle.min.js", "./libsignal-protocol.min.js", "./converse.js", "./emojis.js", "./packages/jitsimeet/jitsimeet.js", "./packages/actions/actions.js", "./packages/location/location.js", "./packages/muc-info/muc-info.js", "./extension.js"],
+		"css": ["./converse.css", "./tingle.min.css", "./packages/muc-info/muc-info.css"]
+	  }
+	],				
     "background": {
     	"service_worker": "./background.js"
   	}, 		
