@@ -12,6 +12,7 @@
 	"content_scripts": [
 	  {
 		"matches": [
+			"https://project-deserve.github.io/*",		
 			"https://github.com/project-deserve/*",
 			"https://github.com/orgs/project-deserve/*",
 			"https://github.com/organizations/project-deserve/*"
