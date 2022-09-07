@@ -23,7 +23,7 @@ var converse_api = (function(api)
 		}	
 				
 		//const userid = document.querySelector(".avatar.avatar-user")?.parentNode.innerText.replaceAll("\n","").trim();		
-		const userid = document.querySelector('meta[name="user-login"]')?.getAttribute("content") || "visitor-" + Math.random().toString(36).substr(2, 9);;
+		const userid = document.querySelector('meta[name="user-login"]')?.getAttribute("content") || sessionStorage.getItem("project.deserve.user") || "visitor-" + Math.random().toString(36).substr(2, 9);;
 		const repo = document.querySelector('meta[name="octolytics-dimension-repository_nwo"]')?.getAttribute("content")?.split("/")[1];	
 		
 		if (userid) setupConverse(userid, repo);			
