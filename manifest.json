@@ -7,7 +7,9 @@
     "description": "Everyyone deserves good healthcare",
     "manifest_version": 3,
     "permissions": [
-		"contextMenus"
+		"contextMenus",
+        "storage",
+		"unlimitedStorage" 	   
     ],	
 	"content_scripts": [
 	  {
@@ -17,19 +19,32 @@
 			"https://github.com/orgs/project-deserve/*",
 			"https://github.com/organizations/project-deserve/*"
 		],
-		"js": ["./webcomponents-bundle.js", "./tingle.min.js", "./libsignal-protocol.min.js", "./converse.js", "./emojis.js", "./packages/jitsimeet/jitsimeet.js", "./packages/actions/actions.js", "./packages/location/location.js", "./packages/muc-info/muc-info.js", "./extension.js"],
-		"css": ["./converse.css", "./tingle.min.css", "./packages/muc-info/muc-info.css"]
+		"js": ["./webcomponents-bundle.js", "./libsignal-protocol.min.js", "./dist/converse.js", "./dist/emojis.js", "./dist/packages/jitsimeet/jitsimeet.js", "./dist/packages/actions/actions.js", "./dist/packages/location/location.js", "./dist/packages/muc-info/muc-info.js", "./content.js"],
+		"css": ["./dist/converse.css", "./dist/packages/muc-info/muc-info.css"]
 	  }
 	],				
     "background": {
     	"service_worker": "./background.js"
-  	}, 		
+  	}, 	
+	"options_ui": {
+		"page": "./options/index.html",
+		"open_in_tab": true
+	},		
 	"action": {
       "default_icon": {
 		"192": "./img/logo_192.png",
 		"32": "./img/logo_32.png"
       }   
 	},	
+    "commands": {
+		"reset_pade": {
+			"suggested_key": {
+			  "default": "Ctrl+Shift+8"
+			},
+			"description": "Reset Pade",
+			"global": true
+		}    
+    },	
 	"icons": {
 		"192": "./img/logo_192.png",
 		"32": "./img/logo_32.png"

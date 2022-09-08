@@ -21,10 +21,6 @@ self.addEventListener('message', function (event) {
 //
 // -------------------------------------------------------
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	console.debug("chrome.runtime.onMessage", message);	
-});	
-
 chrome.contextMenus.onClicked.addListener((info, win) => {
 	console.debug("chrome.contextMenus.onClicked", info.selectionText, info);
 });
@@ -35,4 +31,19 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	console.log("chrome.runtime.onMessage", message);
+
+	if (message.action == "load_config") {	
+		chrome.storage.local.get('settings', function(data) {		
+			sendResponse({settings: data.settings, message});
+		});			
+	}
+	return true;
+});	
+
+chrome.commands.onCommand.addListener((command) => {
+	console.debug('Command:', command);
+	
+	if (command == "reset_pade") {
+		chrome.runtime.reload();
+	}
 });	
