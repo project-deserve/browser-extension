@@ -1,5 +1,5 @@
-var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, repo, token, config;
-const PADE = '<svg data-view-component="true" class="octicon octicon-gear UnderlineNav-octicon d-none d-sm-inline" width="16" height="16" viewBox="0 0 32 32"><path d="M29.999 14l-6.001 3.999a3.961 3.961 0 00-1.408-3.02c2.034-1.224 3.406-3.431 3.406-5.978a7 7 0 00-14.001 0A6.97 6.97 0 0014.108 14h-3.667c.957-1.061 1.558-2.455 1.558-4A6 6 0 100 10c0 1.809.816 3.409 2.083 4.509A3.977 3.977 0 000 17.999v8a4.001 4.001 0 004 3.999h15.998c2.207 0 4-1.792 4-3.999v-1l6.001 4.999A2.001 2.001 0 0032 27.997V15.998A2.002 2.002 0 0029.999 14zM2.001 10a4 4 0 118 .002A4 4 0 012 10zm19.998 15.999A2.001 2.001 0 0119.998 28H4a2.002 2.002 0 01-2.002-2.001v-8c0-1.103.895-2.001 2.002-2.001h15.998c1.104 0 2.001.895 2.001 2.001v8zm-3-11.989a5.01 5.01 0 01-5.012-5.012 5.01 5.01 0 015.012-5.012 5.01 5.01 0 015.012 5.012 5.013 5.013 0 01-5.012 5.012zm11 3.487v10.496l-6.001-4.995v-3l6.001-4v1.499z"/></svg>';
+var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, repo, token, config, setupAvatar;
+const nickColors = {}, anonAvatars = {};
 
 function getSetting(name, value) {
 	return value;
@@ -61,10 +61,11 @@ var converse_api = (function(api)
 			assets_path: "./dist",			
 			allow_non_roster_messaging: true,
 			loglevel: 'info',
-			authentication: 'anonymous',
+			authentication: 'login',
 			auto_login: true,
 			discover_connection_methods: false,					
-			jid:  domain,
+			jid:  userid + "@" + domain,
+			password: token,
 			default_domain: domain,
 			domain_placeholder: domain,
 			locked_domain: domain,
@@ -98,12 +99,13 @@ var converse_api = (function(api)
 				_ = converse.env._;
 				__ = _converse.__;
 				dayjs = converse.env.dayjs;
-				converse_html = converse.env.html;
+				converse_html = converse.env.html;	
 				
 				_converse.api.listen.on('connected', async function() {
 					const token = sessionStorage.getItem("project.deserve.token");
-					console.debug("connected", token);	
-
+					console.debug("connected", token);					
+		
+					setupTimer();					
 /*					
 					if (token) {
 						const response = await fetch("https://api.github.com/orgs/project-deserve/members", {method: "GET", headers: {authorization: token}});
@@ -117,9 +119,45 @@ var converse_api = (function(api)
 				{
 					console.debug("messageNotification", data);
 					location.reload();
-
 				})				
-			
+
+				_converse.api.listen.on('chatRoomViewInitialized', function (view)
+				{
+					console.debug("chatRoomViewInitialized", view);
+					addPadeUI();										
+				});
+				
+				_converse.api.listen.on('chatBoxViewInitialized', function (view)
+				{
+					console.debug("chatBoxViewInitialized", view);
+					addPadeUI();					
+				});
+				
+				_converse.api.listen.on('chatBoxClosed', function (chatbox)
+				{
+					console.debug("chatBoxClosed", chatbox);
+					addPadeUI();
+				});	
+
+				_converse.api.waitUntil('VCardsInitialized').then(() => {				
+					const vcards = _converse.vcards.models;							
+					for (let i=0; i < vcards.length; i++) setAvatar(vcards[i]);	
+					
+				}).catch(function (err) {
+					console.error('waiting for VCardsInitialized error', err);
+				});	
+
+				_converse.api.listen.on('rosterContactInitialized', function(contact) {
+					setAvatar(contact);
+				});	
+
+				_converse.api.listen.on('parseMessage', async (stanza, attrs) => {
+					return parseStanza(stanza, attrs);
+				});	
+				
+				_converse.api.listen.on('parseMUCMessage', async (stanza, attrs) => {
+					return parseStanza(stanza, attrs);
+				});				
 			}
 
 		});
@@ -159,7 +197,7 @@ var converse_api = (function(api)
 		
 		if (menu && !chatButton) {
 			const ele = document.createElement("li");
-			ele.innerHTML = '<a id="pade-button" class="UnderlineNav-item no-wrap js-responsive-underlinenav-item js-selected-navigation-item">' + PADE + '<span data-content="Pade">Pàdé Dokita</span></a>';
+			ele.innerHTML = '<a id="pade-button" class="UnderlineNav-item no-wrap js-responsive-underlinenav-item js-selected-navigation-item"><img width="16" src="https://github.com/project-deserve/browser-extension/raw/main/img/logo_32.png" /><span data-content="Pade">Pàdé Dokita</span></a>';
 			ele.classList.add("d-inline-flex");
 			menu.appendChild(ele);
 
@@ -198,6 +236,260 @@ var converse_api = (function(api)
 		div.innerHTML = '<style>' + control + chatroom + chatbox + '</style><div id="conversejs" class="theme-concord"></div>';
 		document.body.appendChild(div);				
 	}
+	
+	function setAvatar(contact) {
+		//console.debug("setAvatar - old", contact);	
+		
+		if (_converse.DEFAULT_IMAGE == contact.get('image') && contact.get('jid')) {
+			let label = contact.get('jid');
+			
+			if (_converse.connection.jid.startsWith(contact.get('jid'))) {
+				label = userid;
+			}
+			else
+			
+			if (contact.get('fullname')) {
+				label = contact.get('fullname');
+			}
+			else
+				
+			if (contact.get('nickname')) {
+				label = contact.get('nickname');
+			}
+			else {
+				const pos = contact.get('jid').indexOf("/");
+												
+				if (pos > -1) {
+					label = contact.get('jid').substring(pos + 1);
+				}
+			}
+
+			const dataUri = createAvatar(label);
+			const avatar = dataUri.split(";base64,");
+
+			contact.save("image", avatar[1]);
+			contact.save("image_type", "image/png");
+			
+			console.debug("setAvatar - new", contact);				
+		}		
+	}	
+	
+	async function parseStanza(stanza, attrs) {
+		return attrs;
+	}	
+
+	function addPadeUI() {	
+
+	}	
+	
+	function setupTimer() {	
+		//console.debug("setupTimer render");
+		setupTimeAgo();	
+		renderReactions();						
+		setTimeout(setupTimer, 10000);	
+	}
+
+	function setupTimeAgo() {
+		//console.debug("timeago render");
+		timeago.cancel();
+		const locale = navigator.language.replace('-', '_');
+		
+		const elements = document.querySelectorAll('.chat-msg__time');
+		
+		for (let i=0; i < elements.length; i++)
+		{
+			if (!elements[i].querySelector('.chat-msg__time_span')) {
+				const timestamp = elements[i].getAttribute('timestamp');	
+				const pretty_time = elements[i].innerHTML;				
+				const timeAgo = timeago.format(new Date(pretty_time));
+				elements[i].innerHTML = '<span class="chat-msg__time_span" title="' + pretty_time + '" datetime="' + timestamp + '">' + timeAgo + '</span>';
+			}
+		}
+		
+		timeago.render(document.querySelectorAll('.chat-msg__time_span'), locale);
+	}
+	
+	function renderAvatars() {
+		//console.debug("renderAvatars");		
+		const avatars = document.querySelectorAll(".message.chat-msg.delayed.groupchat.chat-msg--with-avatar");		
+		
+		for (avatar of avatars) {
+			if (!avatar.querySelector('img')) {			
+				const from = Strophe.getResourceFromJid(avatar.getAttribute("data-from"));
+				let datauri = anonAvatars[from];
+				
+				if (!datauri) {
+					datauri = createAvatar(from);
+					anonAvatars[from] = datauri;					
+				}
+				const node = avatar.querySelector("converse-avatar");	
+				
+				if (node) {					
+					node.innerHTML = "<img width='40' src='" + datauri + "' />";
+				}
+			}
+		}
+	}
+
+	function renderReactions() {
+		const models = _converse.chatboxes.models;	
+		//console.debug("rections render", models);
+		const msgReactions = new Map();
+
+		for (model of models)
+		{
+			if (model.messages) 
+			{
+				for (message of model.messages.models)
+				{
+					const reactionId = message.get('reaction_id');	
+					const reactionEmoji = message.get('reaction_emoji');
+					
+					if (reactionId) 
+					{
+						//console.debug("renderReactions", model.get('id'), reactionId, reactionEmoji);
+						
+						if (!msgReactions.has(reactionId)) {
+							msgReactions.set(reactionId, {emojis: new Map(), reactionId});
+						}
+						
+						const emojis = msgReactions.get(reactionId).emojis;
+						
+						if (!emojis.has(reactionEmoji)) {
+							emojis.set(reactionEmoji, {count: 0, code: converse.env.utils.shortnamesToEmojis(reactionEmoji)});
+						}					
+						
+						emojis.get(reactionEmoji).count++;						
+					}
+				}
+			}
+		}
+
+		for (const reaction of msgReactions.values()) {
+			//console.debug("rections item", reaction);		
+			const el = document.querySelector('[data-msgid="' + reaction.reactionId + '"]');	
+			
+			if (el) {			
+				let reactionDiv = el.querySelector('.pade-reaction');
+				
+				if (!reactionDiv) {
+					const msgText = el.querySelector('.chat-msg__text');
+					reactionDiv = newElement('div', null, null, 'pade-reaction');	
+					msgText.insertAdjacentElement('afterEnd', reactionDiv);
+				}			
+					
+				let div = "";
+				
+				for (const emoji of reaction.emojis.values()) {	
+					//console.debug("rections emoji", emoji);	
+					div = div + '<span class="chat-msg__reaction">' + emoji.code + '&nbsp' + emoji.count + '</span>';
+				}
+				
+				reactionDiv.innerHTML = div;	
+			}
+		}
+	}
+	
+	function setupMUCAvatars() {
+		let elements = document.querySelectorAll('.list-item.controlbox-padded');	
+		console.debug("setupMUCAvatars", elements);	
+			
+		for (let i=0; i < elements.length; i++)
+		{
+			if (!elements[i].querySelector('.pade-avatar')) {		
+				const jid = elements[i].getAttribute('data-room-jid') || elements[i].getAttribute('data-headline-jid');
+				console.debug("setupMUCAvatars", jid);		
+				
+				if (jid) {
+					const img = createAvatar(jid);
+					const avatar = newElement('span', null, '<img style="border-radius: var(--avatar-border-radius); margin-right: 10px;" src="' + img + '" class="avatar avatar" width="30" height="30" />', 'pade-avatar');
+					elements[i].prepend(avatar);
+				}
+			}			
+		}	
+	}	
+	
+	function createAvatar(nickname, width, height, font) {
+		console.debug("createAvatar", nickname);	
+		
+		if (_converse.vcards)
+		{
+			let vcard = _converse.vcards.findWhere({'jid': nickname});
+			if (!vcard) vcard = _converse.vcards.findWhere({'nickname': nickname});
+			if (vcard && vcard.get('image') && _converse.DEFAULT_IMAGE != vcard.get('image')) return "data:" + vcard.get('image_type') + ";base64," + vcard.get('image');
+		}	
+
+		if (!nickname) nickname = "Unknown";
+		nickname = nickname.toLowerCase();
+
+		if (!width) width = 128;
+		if (!height) height = 128;
+		if (!font) font = "64px Arial";
+
+		var canvas = document.createElement('canvas');
+		canvas.style.display = 'none';
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+		var context = canvas.getContext('2d');
+		context.fillStyle = getRandomColor(nickname);
+		context.fillRect(0, 0, canvas.width, canvas.height);
+		context.font = font;
+		context.fillStyle = "#fff";
+		context.textAlign = "center";		
+
+		var first, last, pos = nickname.indexOf("@");
+		if (pos > 0) nickname = nickname.substring(0, pos);
+
+		// try to split nickname into words at different symbols with preference
+		let words = nickname.split(/[, ]/); // "John W. Doe" -> "John "W." "Doe"  or  "Doe,John W." -> "Doe" "John" "W."
+		if (words.length == 1) words = nickname.split("."); // "John.Doe" -> "John" "Doe"  or  "John.W.Doe" -> "John" "W" "Doe"
+		if (words.length == 1) words = nickname.split("-"); // "John-Doe" -> "John" "Doe"  or  "John-W-Doe" -> "John" "W" "Doe"
+
+		if (words && words[0] && words.first != '') {
+			const firstInitial = words[0][0]; // first letter of first word
+			var lastInitial = null; // first letter of last word, if any
+
+			const lastWordIdx = words.length - 1; // index of last word
+			
+			if (lastWordIdx > 0 && words[lastWordIdx] && words[lastWordIdx] != '') {
+				lastInitial = words[lastWordIdx][0]; // first letter of last word
+			}
+
+			// if nickname consist of more than one words, compose the initials as two letter
+			var initials = firstInitial;
+			
+			if (lastInitial) {
+				// if any comma is in the nickname, treat it to have the lastname in front, i.e. compose reversed
+				initials = nickname.indexOf(",") == -1 ? firstInitial + lastInitial : lastInitial + firstInitial;
+			}
+
+			const metrics = context.measureText(initials.toUpperCase());
+			context.fillText(initials.toUpperCase(), width / 2, (height - metrics.actualBoundingBoxAscent - metrics.actualBoundingBoxDescent) / 2 + metrics.actualBoundingBoxAscent);
+
+			var data = canvas.toDataURL();
+			document.body.removeChild(canvas);
+		}
+
+		return canvas.toDataURL();
+	}	
+	
+	function getRandomColor(nickname) {
+		if (nickColors[nickname])
+		{
+			return nickColors[nickname];
+		}
+		else {
+			var letters = '0123456789ABCDEF';
+			var color = '#';
+
+			for (var i = 0; i < 6; i++) {
+				color += letters[Math.floor(Math.random() * 16)];
+			}
+			nickColors[nickname] = color;
+			return color;
+		}
+	}	
 
 	//-------------------------------------------------------
 	//

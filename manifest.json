@@ -19,7 +19,7 @@
 			"https://github.com/orgs/project-deserve/*",
 			"https://github.com/organizations/project-deserve/*"
 		],
-		"js": ["./webcomponents-bundle.js", "./libsignal-protocol.min.js", "./dist/converse.js", "./dist/emojis.js", "./dist/packages/jitsimeet/jitsimeet.js", "./dist/packages/actions/actions.js", "./dist/packages/location/location.js", "./dist/packages/muc-info/muc-info.js", "./content.js"],
+		"js": ["./webcomponents-bundle.js", "./timeago.min.js", "./libsignal-protocol.min.js", "./dist/converse.js", "./dist/emojis.js", "./dist/packages/jitsimeet/jitsimeet.js", "./dist/packages/actions/actions.js", "./dist/packages/location/location.js", "./dist/packages/muc-info/muc-info.js", "./content.js"],
 		"css": ["./dist/converse.css", "./dist/packages/muc-info/muc-info.css"]
 	  }
 	],				

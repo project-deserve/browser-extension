@@ -29573,7 +29573,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _contact_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./contact.js */ "./src/headless/plugins/roster/contact.js");
 /* harmony import */ var _converse_headless_log__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @converse/headless/log */ "./src/headless/log.js");
-/* harmony import */ var lodash_es_sum__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! lodash-es/sum */ "./node_modules/lodash-es/sum.js");
 /* harmony import */ var _converse_skeletor_src_collection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @converse/skeletor/src/collection */ "./node_modules/@converse/skeletor/src/collection.js");
 /* harmony import */ var _converse_skeletor_src_model__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @converse/skeletor/src/model */ "./node_modules/@converse/skeletor/src/model.js");
 /* harmony import */ var _converse_headless_core__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @converse/headless/core */ "./src/headless/core.js");
@@ -29787,11 +29786,6 @@ const RosterContacts = _converse_skeletor_src_collection__WEBPACK_IMPORTED_MODUL
         contact.authorize().subscribe();
       }
     }
-  },
-
-  getNumOnlineContacts() {
-    const ignored = ['offline', 'unavailable'];
-    return (0,lodash_es_sum__WEBPACK_IMPORTED_MODULE_7__["default"])(this.models.filter(m => !ignored.includes(m.presence.get('show'))));
   },
 
   /**
@@ -37047,8 +37041,8 @@ function getHeadingButtons(view, buttons) {
 }
 async function removeBookmarkViaEvent(ev) {
   ev.preventDefault();
-  const name = ev.target.getAttribute('data-bookmark-name');
-  const jid = ev.target.getAttribute('data-room-jid');
+  const name = ev.currentTarget.getAttribute('data-bookmark-name');
+  const jid = ev.currentTarget.getAttribute('data-room-jid');
   const result = await _converse_headless_core__WEBPACK_IMPORTED_MODULE_3__.api.confirm((0,i18n__WEBPACK_IMPORTED_MODULE_2__.__)('Are you sure you want to remove the bookmark "%1$s"?', name));
 
   if (result) {
@@ -37059,7 +37053,7 @@ async function removeBookmarkViaEvent(ev) {
 }
 function addBookmarkViaEvent(ev) {
   ev.preventDefault();
-  const jid = ev.target.getAttribute('data-room-jid');
+  const jid = ev.currentTarget.getAttribute('data-room-jid');
   _converse_headless_core__WEBPACK_IMPORTED_MODULE_3__.api.modal.show(_modal_js__WEBPACK_IMPORTED_MODULE_0__["default"], {
     jid
   }, ev);
@@ -42780,8 +42774,10 @@ const {
   },
 
   parseRoomDataFromEvent(form) {
+    var _data$get;
+
     const data = new FormData(form);
-    const jid = data.get('chatroom');
+    const jid = (_data$get = data.get('chatroom')) === null || _data$get === void 0 ? void 0 : _data$get.trim();
     let nick;
 
     if (_converse_headless_core__WEBPACK_IMPORTED_MODULE_3__.api.settings.get('locked_muc_nickname')) {
@@ -50803,7 +50799,7 @@ class RoomsList extends shared_components_element_js__WEBPACK_IMPORTED_MODULE_3_
 
   showRoomDetailsModal(ev) {
     // eslint-disable-line class-methods-use-this
-    const jid = ev.target.getAttribute('data-room-jid');
+    const jid = ev.currentTarget.getAttribute('data-room-jid');
 
     const room = _converse_headless_core__WEBPACK_IMPORTED_MODULE_5__._converse.chatboxes.get(jid);
 
@@ -50827,11 +50823,11 @@ class RoomsList extends shared_components_element_js__WEBPACK_IMPORTED_MODULE_3_
   async closeRoom(ev) {
     // eslint-disable-line class-methods-use-this
     ev.preventDefault();
-    const name = ev.target.getAttribute('data-room-name');
+    const name = ev.currentTarget.getAttribute('data-room-name');
+    const jid = ev.currentTarget.getAttribute('data-room-jid');
     const result = await _converse_headless_core__WEBPACK_IMPORTED_MODULE_5__.api.confirm((0,i18n__WEBPACK_IMPORTED_MODULE_4__.__)("Are you sure you want to leave the groupchat %1$s?", name));
 
     if (result) {
-      const jid = ev.target.getAttribute('data-room-jid');
       const room = await _converse_headless_core__WEBPACK_IMPORTED_MODULE_5__.api.rooms.get(jid);
       room.close();
     }
@@ -86064,45 +86060,6 @@ function baseSortBy(array, comparer) {
 
 /***/ }),
 
-/***/ "./node_modules/lodash-es/_baseSum.js":
-/*!********************************************!*\
-  !*** ./node_modules/lodash-es/_baseSum.js ***!
-  \********************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/**
- * The base implementation of `_.sum` and `_.sumBy` without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} array The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {number} Returns the sum.
- */
-function baseSum(array, iteratee) {
-  var result,
-      index = -1,
-      length = array.length;
-
-  while (++index < length) {
-    var current = iteratee(array[index]);
-    if (current !== undefined) {
-      result = result === undefined ? current : (result + current);
-    }
-  }
-  return result;
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (baseSum);
-
-
-/***/ }),
-
 /***/ "./node_modules/lodash-es/_baseTimes.js":
 /*!**********************************************!*\
   !*** ./node_modules/lodash-es/_baseTimes.js ***!
@@ -94228,47 +94185,6 @@ function stubFalse() {
 }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (stubFalse);
-
-
-/***/ }),
-
-/***/ "./node_modules/lodash-es/sum.js":
-/*!***************************************!*\
-  !*** ./node_modules/lodash-es/sum.js ***!
-  \***************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _baseSum_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./_baseSum.js */ "./node_modules/lodash-es/_baseSum.js");
-/* harmony import */ var _identity_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./identity.js */ "./node_modules/lodash-es/identity.js");
-
-
-
-/**
- * Computes the sum of the values in `array`.
- *
- * @static
- * @memberOf _
- * @since 3.4.0
- * @category Math
- * @param {Array} array The array to iterate over.
- * @returns {number} Returns the sum.
- * @example
- *
- * _.sum([4, 2, 8, 6]);
- * // => 20
- */
-function sum(array) {
-  return (array && array.length)
-    ? (0,_baseSum_js__WEBPACK_IMPORTED_MODULE_0__["default"])(array, _identity_js__WEBPACK_IMPORTED_MODULE_1__["default"])
-    : 0;
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (sum);
 
 
 /***/ }),
