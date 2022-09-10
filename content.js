@@ -1,4 +1,4 @@
-var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, repo, token, config, setupAvatar;
+var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, name, repo, token, config, setupAvatar;
 const nickColors = {}, anonAvatars = {};
 
 function getSetting(name, value) {
@@ -33,8 +33,9 @@ var converse_api = (function(api)
 
 			if (data.message && data.settings) {
 				domain = data.settings.pade_domain;
+				name = data.settings.pade_name;					
 				url = data.settings.pade_server_url;
-				userid = data.message.username;
+				userid = data.message.username;			
 				token = data.settings.pade_access_token;
 				repo = data.message.repository;
 			
@@ -71,7 +72,7 @@ var converse_api = (function(api)
 			locked_domain: domain,
 			auto_away: 300,
 			auto_reconnect: true,
-			nickname: userid,
+			nickname: name,
 			bosh_service_url: url + '/http-bind/',
 			auto_join_rooms:['deserve_chat@conference.' + domain],
 			auto_join_private_chats: [],

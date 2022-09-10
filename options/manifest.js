@@ -33,18 +33,28 @@ function initiate() {
 			},
 			{
 				"tab": i18n.get("Configuration"),
-				"group": i18n.get("Connection"),
-				"name": "pade_save",
-				"type": "button",
-				"text": i18n.get("Save")			
+				"group": i18n.get("Login"),
+				"name": "pade_username",
+				"type": "text",
+				"label": i18n.get("Username"),
+				"text": i18n.get("anotheruser")
+			},			
+			{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Login"),
+				"name": "pade_name",
+				"type": "text",
+				"label": i18n.get("Display Name"),
+				"text": i18n.get("Another User")
 			},
 			{
 				"tab": i18n.get("Configuration"),
-				"group": i18n.get("Connection"),
-				"name": "factoryReset",
-				"type": "button",
-				"text": i18n.get("Factory Reset")
-			},			
+				"group": i18n.get("Login"),
+				"name": "pade_email",
+				"type": "text",
+				"label": i18n.get("Email"),
+				"text": "anotheruser@domain"
+			},					
 			{
 				"tab": i18n.get("Configuration"),
 				"group": i18n.get("User Interface"),
@@ -136,13 +146,37 @@ function initiate() {
 					{"text": "Venezuela", "value": "es-VE"},
 					{"text": "Viet Nam", "value": "vi-VN"}
 				]
-			}		
+			},	
+			{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Action"),
+				"name": "pade_save",
+				"type": "button",
+				"text": i18n.get("Save")			
+			},
+			{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Action"),
+				"name": "factoryReset",
+				"type": "button",
+				"text": i18n.get("Factory Reset")
+			},	
+			{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Action"),
+				"name": "actionResponse",
+				"type": "description",
+				"text": ""
+			},			
 			
 		],
 		"alignment": [
 			[	"pade_domain",
 				"pade_server_url",
-				"pade_access_token"
+				"pade_access_token",
+				"pade_username",
+				"pade_name",
+				"pade_email"
 			]		
 		]
 	};
