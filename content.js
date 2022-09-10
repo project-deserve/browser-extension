@@ -74,7 +74,7 @@ var converse_api = (function(api)
 			auto_reconnect: true,
 			nickname: name,
 			bosh_service_url: url + '/http-bind/',
-			auto_join_rooms:['deserve_chat@conference.' + domain],
+			auto_join_rooms:[],
 			auto_join_private_chats: [],
 			message_archiving: 'always',
 			websocket_url: url.replaceAll("http", "ws") + '/ws/',
@@ -205,6 +205,27 @@ var converse_api = (function(api)
 			ele.addEventListener('click', (event) => {		
 				location.reload();				
 			});				
+		}
+		
+		if (location.href.indexOf("/issues/") > -1) {
+			customizeIssues();
+		}
+	}
+	
+	function customizeIssues() {
+		const identities = document.querySelectorAll('h3[dir="auto"]');
+		
+		for (identity of identities) {
+			//console.debug("customizeIssues", identity.innerText, identity.nextElementSibling?.innerText);
+			
+			if (identity.innerText == "Identity Number") {
+				const node = identity.nextElementSibling;
+				
+				if (node && !node.innerHTML.startsWith("<a href=")) {
+					const id = node.innerText;
+					node.innerHTML = `<a href="https://github.com/project-deserve/clinic-alpha-one/tree/main/Personal%20Health%20Records/${id}">${id}</a>`;
+				}
+			}
 		}
 	}
 	
