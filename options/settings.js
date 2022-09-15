@@ -37,7 +37,8 @@ window.addEvent("domready", function () {
 
 				config["pade_username"] = getSetting("pade_username");				
 				config["pade_name"] = getSetting("pade_name");				
-				config["pade_email"] = getSetting("pade_email");				
+				config["pade_email"] = getSetting("pade_email");
+				config["pade_printer_name"] = getSetting("pade_printer_name");				
 
 				chrome.storage.local.set({settings: config}, function() {
 					console.debug('chrome.storage is set for settings', config);

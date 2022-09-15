@@ -1,4 +1,4 @@
-var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, name, repo, token, config, setupAvatar;
+var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, name, repo, token, config, setupAvatar, printer;
 const nickColors = {}, anonAvatars = {};
 
 function getSetting(name, value) {
@@ -37,6 +37,7 @@ var converse_api = (function(api)
 				url = data.settings.pade_server_url;
 				userid = data.message.username;			
 				token = data.settings.pade_access_token;
+				printer = data.settings.pade_printer_name;
 				repo = data.message.repository;
 			
 				sessionStorage.setItem("project.deserve.token", token);
@@ -227,6 +228,66 @@ var converse_api = (function(api)
 				}
 			}
 		}
+
+		const h1Divs = document.querySelectorAll('h1[dir="auto"]');
+		let element = null;
+		
+		for (h1Div of h1Divs) 
+		{			
+			if (h1Div.innerHTML == "Prescription") {
+				const prescription = h1Div.nextElementSibling.innerText;
+				h1Div.innerHTML = `<button data-prescription="${prescription}" id="pade_prescription">Print Prescription</button>`;
+				element = h1Div;
+			}
+		}	
+
+		if (element) {
+			element.addEventListener('click', (event) => {		
+				const prescription = event.target.getAttribute("data-prescription");
+				console.debug("printing " + prescription);
+				
+				if (printer) {
+					JSPM.JSPrintManager.auto_reconnect = true;
+					JSPM.JSPrintManager.start();
+
+					JSPM.JSPrintManager.WS.onStatusChanged = function () 
+					{				
+						if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Open)
+							printPrescription(prescription);
+						else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Closed) {
+							settings.manifest.actionResponse.element.innerHTML = 'JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm';
+							return false;
+						}
+						else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Blocked) {
+							settings.manifest.actionResponse.element.innerHTML = 'JSPM has blocked this website!';
+							return false;
+						}					
+					};		
+				}				
+			});		
+		}
+	}
+	
+	function printPrescription(prescription) {	
+		console.debug("testPrinter", printer, prescription);
+
+		let cpj = new JSPM.ClientPrintJob();
+		cpj.clientPrinter = new JSPM.InstalledPrinter(printer);
+
+		let esc = '\x1B'; 			//ESC byte in hex notation
+		let newLine = '\x0A'; 		//LF byte in hex notation
+
+		let cmds = esc + "@"; 		//Initializes the printer (ESC @)
+		cmds += esc + '!' + '\x00'; 	//Character font A selected (ESC ! 0)
+		cmds += '------------------------------'; 	
+		cmds += newLine;	
+		cmds += prescription;	
+		cmds += newLine;			
+		cmds += '------------------------------'; 	
+		cmds += newLine + newLine;
+		
+		cpj.printerCommands = cmds;
+		cpj.sendToClient();		
 	}
 	
 	function newElement(el, id, html, className) {
