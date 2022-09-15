@@ -215,6 +215,7 @@ var converse_api = (function(api)
 	
 	function customizeIssues() {
 		const identities = document.querySelectorAll('h3[dir="auto"]');
+		let id = null;
 		
 		for (identity of identities) {
 			//console.debug("customizeIssues", identity.innerText, identity.nextElementSibling?.innerText);
@@ -223,7 +224,7 @@ var converse_api = (function(api)
 				const node = identity.nextElementSibling;
 				
 				if (node && !node.innerHTML.startsWith("<a href=")) {
-					const id = node.innerText;
+					id = node.innerText;
 					node.innerHTML = `<a href="https://github.com/project-deserve/clinic-alpha-one/tree/main/Personal%20Health%20Records/${id}">${id}</a>`;
 				}
 			}
@@ -241,7 +242,7 @@ var converse_api = (function(api)
 			}
 		}	
 
-		if (element) {
+		if (id && element) {
 			element.addEventListener('click', (event) => {		
 				const prescription = event.target.getAttribute("data-prescription");
 				console.debug("printing " + prescription);
@@ -253,7 +254,7 @@ var converse_api = (function(api)
 					JSPM.JSPrintManager.WS.onStatusChanged = function () 
 					{				
 						if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Open)
-							printPrescription(prescription);
+							printPrescription(id, prescription);
 						else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Closed) {
 							settings.manifest.actionResponse.element.innerHTML = 'JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm';
 							return false;
@@ -268,8 +269,8 @@ var converse_api = (function(api)
 		}
 	}
 	
-	function printPrescription(prescription) {	
-		console.debug("testPrinter", printer, prescription);
+	function printPrescription(id, prescription) {	
+		console.debug("testPrinter", printer, id, prescription);
 
 		let cpj = new JSPM.ClientPrintJob();
 		cpj.clientPrinter = new JSPM.InstalledPrinter(printer);
@@ -278,12 +279,19 @@ var converse_api = (function(api)
 		let newLine = '\x0A'; 		//LF byte in hex notation
 
 		let cmds = esc + "@"; 		//Initializes the printer (ESC @)
-		cmds += esc + '!' + '\x00'; 	//Character font A selected (ESC ! 0)
-		cmds += '------------------------------'; 	
+		cmds += esc + '!' + '\x00'; 	
+		cmds += '-------------------------------'; 	
 		cmds += newLine;	
+		cmds += esc + '!' + '\x38'; 	//Emphasized + Double-height + Double-width mode selected (ESC ! (8 + 16 + 32)) 56 dec => 38 hex
+		cmds += 'Project Deserve'; 	
+		cmds += newLine;	
+		cmds += esc + '!' + '\x08'; 			
+		cmds += id;			
+		cmds += newLine + newLine;	
+		cmds += esc + '!' + '\x00'; 			
 		cmds += prescription;	
 		cmds += newLine;			
-		cmds += '------------------------------'; 	
+		cmds += '-------------------------------'; 	
 		cmds += newLine + newLine;
 		
 		cpj.printerCommands = cmds;
