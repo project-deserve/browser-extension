@@ -55,6 +55,29 @@ window.addEvent("domready", function () {
 			});			
 		})
 
+        settings.manifest.testPrinter.addEvent("action", function ()  
+		{
+			const printer = getSetting("pade_printer_name", null);
+			
+			if (printer) {
+				JSPM.JSPrintManager.auto_reconnect = true;
+				JSPM.JSPrintManager.start();
+
+				JSPM.JSPrintManager.WS.onStatusChanged = function () 
+				{				
+					if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Open)
+						testPrinter(printer);
+					else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Closed) {
+						settings.manifest.actionResponse.element.innerHTML = 'JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm';
+						return false;
+					}
+					else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Blocked) {
+						settings.manifest.actionResponse.element.innerHTML = 'JSPM has blocked this website!';
+						return false;
+					}					
+				};		
+			}
+        });		
 
         settings.manifest.factoryReset.addEvent("action", function ()  
 		{
@@ -68,6 +91,45 @@ window.addEvent("domready", function () {
         });		
 	});
 });
+
+function testPrinter(printer) {
+	console.debug("testPrinter", printer);
+
+	let cpj = new JSPM.ClientPrintJob();
+	cpj.clientPrinter = new JSPM.InstalledPrinter(printer);
+
+	let esc = '\x1B'; 			//ESC byte in hex notation
+	let newLine = '\x0A'; 		//LF byte in hex notation
+
+	let cmds = esc + "@"; 		//Initializes the printer (ESC @)
+	cmds += esc + '!' + '\x00'; 	//Character font A selected (ESC ! 0)
+	cmds += '------------------------------'; 	
+	cmds += newLine;	
+	cmds += esc + '!' + '\x38'; 	//Emphasized + Double-height + Double-width mode selected (ESC ! (8 + 16 + 32)) 56 dec => 38 hex
+	cmds += 'Project Deserve'; 	//text to print
+	cmds += newLine + newLine;
+	cmds += esc + '!' + '\x00'; 	//Character font A selected (ESC ! 0)
+	cmds += 'Nivaquine                 5.00'; 
+	cmds += newLine;
+	cmds += 'Aspirin                   3.78';
+	cmds += newLine + newLine;
+	cmds += 'Vitamin D                 8.78';
+	cmds += newLine;
+	cmds += 'Vitamin K                 0.44';
+	cmds += newLine;
+	cmds += 'Zinc                      9.22';
+	cmds += newLine;
+	cmds += 'Vitamin C                10.00';
+	cmds += newLine;
+	cmds += 'Agbo                      0.78';
+	cmds += newLine;
+	cmds += esc + '!' + '\x00'; 	//Character font A selected (ESC ! 0)
+	cmds += '------------------------------'; 	
+	cmds += newLine + newLine;
+	
+	cpj.printerCommands = cmds;
+	cpj.sendToClient();	
+}
 
 function registerXmppUser(settings, cb) {
 	const url = settings["pade_server_url"] + '/http-bind/';

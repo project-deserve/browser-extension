@@ -54,7 +54,17 @@ function initiate() {
 				"type": "text",
 				"label": i18n.get("Email"),
 				"text": "anotheruser@domain"
-			},					
+			},	
+						{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Printer"),
+				"name": "pade_printer_name",
+				"type": "popupButton",
+				"label": i18n.get("Device"),
+				"options": [
+					{"text": "Thermal Receipt Printer", "value": "POS-58"},
+				]
+			},										
 			{
 				"tab": i18n.get("Configuration"),
 				"group": i18n.get("User Interface"),
@@ -154,6 +164,13 @@ function initiate() {
 				"type": "button",
 				"text": i18n.get("Save")			
 			},
+			{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Action"),
+				"name": "testPrinter",
+				"type": "button",
+				"text": i18n.get("Test Printer")
+			},			
 			{
 				"tab": i18n.get("Configuration"),
 				"group": i18n.get("Action"),
