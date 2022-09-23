@@ -38,20 +38,26 @@ window.addEvent("domready", function () {
 				config["pade_username"] = getSetting("pade_username");				
 				config["pade_name"] = getSetting("pade_name");				
 				config["pade_email"] = getSetting("pade_email");
-				config["pade_printer_name"] = getSetting("pade_printer_name");				
+				config["pade_printer_name"] = getSetting("pade_printer_name");	
+				config["pade_enable_converse"] = getSetting("pade_enable_converse");					
 
 				chrome.storage.local.set({settings: config}, function() {
 					console.debug('chrome.storage is set for settings', config);
 
-					registerXmppUser(config, (status) => {
-						
-						if (status === Strophe.Status.REGISTERED || status === Strophe.Status.CONFLICT) {
-							settings.manifest.actionResponse.element.innerHTML = "";
-							chrome.runtime.reload();
-						} else {
-							settings.manifest.actionResponse.element.innerHTML = "Unable to create or update user profile. Check data provided";
-						}
-					});				  
+					if (config["pade_enable_converse"]) {
+						registerXmppUser(config, (status) => {
+							
+							if (status === Strophe.Status.REGISTERED || status === Strophe.Status.CONFLICT) {
+								settings.manifest.actionResponse.element.innerHTML = "";
+								chrome.runtime.reload();
+							} else {
+								settings.manifest.actionResponse.element.innerHTML = "Unable to create or update user profile. Check data provided - Error code: " + status;
+							}
+						});		
+					} else {
+						settings.manifest.actionResponse.element.innerHTML = "Instant messaging disabled";
+						chrome.runtime.reload();						
+					}						
 				});
 			});			
 		})

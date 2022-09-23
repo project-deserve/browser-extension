@@ -1,4 +1,4 @@
-var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, domain, url, userid, name, repo, token, config, setupAvatar, printer;
+var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, exten, config, setupAvatar;
 const nickColors = {}, anonAvatars = {};
 
 function getSetting(name, value) {
@@ -19,10 +19,9 @@ var converse_api = (function(api)
 		console.debug("converse_api addListener load");	
 
 		document.addEventListener('click', (event) => {		
-			setTimeout(customizeUI, 2000);				
+			setTimeout(customizeUI, 1000);				
 		});
-		
-		customizeUI();		
+			
 		startConverse();
 	});
 	
@@ -31,17 +30,15 @@ var converse_api = (function(api)
 		function handleResponse(data) {
 			console.debug("handleResponse", data);
 
-			if (data.message && data.settings) {
-				domain = data.settings.pade_domain;
-				name = data.settings.pade_name;					
-				url = data.settings.pade_server_url;
-				userid = data.message.username;			
-				token = data.settings.pade_access_token;
-				printer = data.settings.pade_printer_name;
-				repo = data.message.repository;
-			
-				sessionStorage.setItem("project.deserve.token", token);
-				setupConverse();	
+			if (data.message && data.settings) {	
+				exten = data;			
+				sessionStorage.setItem("project.deserve.token", exten.settings.pade_access_token);
+				
+				customizeUI();	
+				
+				if (exten.settings.pade_enable_converse) {
+					setupConverse();
+				}					
 			}
 		}
 
@@ -56,7 +53,7 @@ var converse_api = (function(api)
 	}
 		
 	function setupConverse()    {	
-		console.debug("setupConverse", userid, repo);	
+		console.debug("setupConverse", exten);	
 				
 		config = {
 			theme: 'concord',
@@ -66,26 +63,26 @@ var converse_api = (function(api)
 			authentication: 'login',
 			auto_login: true,
 			discover_connection_methods: false,					
-			jid:  userid + "@" + domain,
-			password: token,
-			default_domain: domain,
-			domain_placeholder: domain,
-			locked_domain: domain,
+			jid:  exten.message.username + "@" + exten.settings.pade_domain,
+			password: exten.settings.pade_access_token,
+			default_domain: exten.settings.pade_domain,
+			domain_placeholder: exten.settings.pade_domain,
+			locked_domain: exten.settings.pade_domain,
 			auto_away: 300,
 			auto_reconnect: true,
-			nickname: name,
-			bosh_service_url: url + '/http-bind/',
+			nickname: exten.settings.pade_name,
+			bosh_service_url: exten.settings.pade_server_url + '/http-bind/',
 			auto_join_rooms:[],
 			auto_join_private_chats: [],
 			message_archiving: 'always',
-			websocket_url: url.replaceAll("http", "ws") + '/ws/',
+			websocket_url: exten.settings.pade_server_url.replaceAll("http", "ws") + '/ws/',
 			jitsimeet_url: 'https://pade.chat:5443/ofmeet',
 			jitsimeet_modal: true,
 			whitelisted_plugins: ['deserve', 'jitsimeet', 'actions']
 		}
 
-		if (repo) {			
-			config.auto_join_rooms = [repo + '@conference.' + domain];
+		if (exten.message.repository) {			
+			config.auto_join_rooms = [exten.message.repository + '@conference.' + exten.settings.pade_domain];
 		}
 
 		console.debug("converse_api setupConverse", config);
@@ -176,11 +173,28 @@ var converse_api = (function(api)
 	function customizeUI() {		
 		modifyTab("Code", "code", "Heath Records");
 		modifyTab("Issues", "issues", "Heath Issues");
+		modifyTab("Discussions", "discussions", "Doctor Discussions");
+		modifyTab("Wiki", "wiki", "Clinical Information");		
 		modifyTab("Pull requests", "pull-requests");	
 		modifyTab("Actions", "actions");		
 		modifyTab("Projects", "projects");		
 		modifyTab("Security", "security");		
 		modifyTab("Insights", "insights");	
+		
+		const heading = document.querySelector(".position-relative.js-header-wrapper");
+		if (heading) heading.style.setProperty("display", "none", "important");		
+		
+		const branchTag = document.querySelector(".file-navigation.mb-3.d-flex.flex-items-start  .flex-self-center.flex-self-stretch.d-none.d-lg-flex.flex-items-center.lh-condensed-ultra");
+		if (branchTag) branchTag.style.setProperty("display", "none", "important");
+		
+		const branchSelectMenu = document.querySelector("#branch-select-menu");
+		if (branchSelectMenu) branchSelectMenu.style.display = 'none';
+		
+		const getRepo = document.querySelector("get-repo");
+		if (getRepo) getRepo.style.display = 'none';	
+		
+		const pageheadActions = document.querySelector(".pagehead-actions.flex-shrink-0.d-none.d-md-inline");
+		if (pageheadActions) pageheadActions.style.setProperty("display", "none", "important");
 		
 		const mainbar = document.querySelector("div.Layout-main div.Box.mb-3");
 		if (mainbar) mainbar.style.display = 'none';	
@@ -192,12 +206,13 @@ var converse_api = (function(api)
 		
 		sidebars.forEach((sidebar) => {
 			if (sidebar.innerHTML == 'Languages') sidebar.parentNode.style.display = 'none';
+			if (sidebar.innerHTML == 'About') sidebar.parentNode.style.display = 'none';			
 		})	
 
 		const menu = document.querySelector('ul[data-view-component="true"].UnderlineNav-body.list-style-none');
 		const chatButton = document.querySelector("#pade-button");
 		
-		if (menu && !chatButton) {
+		if (exten?.settings.pade_enable_converse && menu && !chatButton) {
 			const ele = document.createElement("li");
 			ele.innerHTML = '<a id="pade-button" class="UnderlineNav-item no-wrap js-responsive-underlinenav-item js-selected-navigation-item"><img width="16" src="https://github.com/project-deserve/browser-extension/raw/main/img/logo_32.png" /><span data-content="Pade">Pàdé Dokita</span></a>';
 			ele.classList.add("d-inline-flex");
@@ -247,7 +262,7 @@ var converse_api = (function(api)
 				const prescription = event.target.getAttribute("data-prescription");
 				console.debug("printing " + prescription);
 				
-				if (printer) {
+				if (exten.settings.pade_printer_name) {
 					JSPM.JSPrintManager.auto_reconnect = true;
 					JSPM.JSPrintManager.start();
 
@@ -256,11 +271,11 @@ var converse_api = (function(api)
 						if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Open)
 							printPrescription(id, prescription);
 						else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Closed) {
-							settings.manifest.actionResponse.element.innerHTML = 'JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm';
+							alert('JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm');
 							return false;
 						}
 						else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Blocked) {
-							settings.manifest.actionResponse.element.innerHTML = 'JSPM has blocked this website!';
+							alert('JSPM has blocked this website!');
 							return false;
 						}					
 					};		
@@ -270,10 +285,10 @@ var converse_api = (function(api)
 	}
 	
 	function printPrescription(id, prescription) {	
-		console.debug("testPrinter", printer, id, prescription);
+		console.debug("testPrinter", exten.settings.pade_printer_name, id, prescription);
 
 		let cpj = new JSPM.ClientPrintJob();
-		cpj.clientPrinter = new JSPM.InstalledPrinter(printer);
+		cpj.clientPrinter = new JSPM.InstalledPrinter(exten.settings.pade_printer_name);
 
 		let esc = '\x1B'; 			//ESC byte in hex notation
 		let newLine = '\x0A'; 		//LF byte in hex notation
@@ -335,7 +350,7 @@ var converse_api = (function(api)
 			let label = contact.get('jid');
 			
 			if (_converse.connection.jid.startsWith(contact.get('jid'))) {
-				label = userid;
+				label = exten.message.username;
 			}
 			else
 			

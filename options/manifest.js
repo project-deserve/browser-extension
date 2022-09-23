@@ -9,6 +9,13 @@ function initiate() {
 			{
 				"tab": i18n.get("Configuration"),
 				"group": i18n.get("Connection"),
+				"name": "pade_enable_converse",
+				"type": "checkbox",
+				"label": i18n.get("Enable Instant Messaging")
+			},		
+			{
+				"tab": i18n.get("Configuration"),
+				"group": i18n.get("Connection"),
 				"name": "pade_domain",
 				"type": "text",
 				"label": i18n.get("Domain"),
@@ -250,4 +257,54 @@ function getPassword(password)
 
     window.localStorage["store.settings.password"] = JSON.stringify("token-" + btoa(password));
     return password;
+}
+
+function getStaticSetting(name)
+{
+    let zindex = -1;
+
+    for (let z=0; z<this.manifest.settings.length; z++)
+    {
+        if (name === this.manifest.settings[z].name)
+        {
+            zindex = z;
+            break;
+        }
+    }
+    return zindex;
+}
+
+// branding overrides
+var overrides = Object.getOwnPropertyNames(branding);
+
+console.debug("branding - start", overrides, branding, this.manifest.settings);
+
+for (var i=0; i<overrides.length; i++)
+{
+    var setting = overrides[i];
+    var override = branding[setting];
+
+    var index = getStaticSetting(setting);
+
+    if ( index > -1)
+    {
+        if (override.value != null && override.value != undefined)
+        {
+            var oldSetting = this.manifest.settings[index]
+
+            if (oldSetting.type == "description")
+            {
+                oldSetting.text = override.value
+            }
+
+            if (!window.localStorage["store.settings." + setting])  // override default value
+            {
+                window.localStorage["store.settings." + setting] = JSON.stringify(override.value);
+            }
+        }
+
+        if (override.disable) this.manifest.settings.splice(index, 1);
+    }
+
+    console.debug("branding - found", i, index, setting, override.value, override.disable, window.localStorage["store.settings." + setting]);
 }
