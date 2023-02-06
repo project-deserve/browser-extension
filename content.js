@@ -1,4 +1,4 @@
-var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, exten, config, setupAvatar;
+var $iq, $msg, $pres, _ , __, dayjs, converse_html, _converse, exten, config, setupAvatar, videoHolder, video, emailAddress;
 const nickColors = {}, anonAvatars = {};
 
 function getSetting(name, value) {
@@ -7,6 +7,14 @@ function getSetting(name, value) {
 
 var converse_api = (function(api)
 {
+	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+		console.log("chrome.runtime.onMessage", message);
+		
+		if (message?.action == "take_photo") {
+			takePhoto();
+		}
+	});
+	
 	window.addEventListener("unload", function()  {
 		console.debug("converse_api addListener unload");
 	});
@@ -199,8 +207,13 @@ var converse_api = (function(api)
 		const mainbar = document.querySelector("div.Layout-main div.Box.mb-3");
 		if (mainbar) mainbar.style.display = 'none';	
 
-		const subdir = document.querySelector('div[data-test-selector="subdirectory-container"] div.Box.mb-3');
-		if (subdir) subdir.style.display = 'none';			
+		let subdir = document.querySelector('div[data-test-selector="subdirectory-container"] div.Box.mb-3');
+		if (subdir) subdir.style.display = 'none';	
+
+		if (location.href.indexOf("/Personal%20Health%20Records") > -1) {
+			subdir = document.querySelector('div.Box.mb-3');
+			if (subdir) subdir.style.display = 'none';	
+		}			
 		
 		const sidebars = document.querySelectorAll("div.Layout-sidebar .h4.mb-3");
 		
@@ -223,7 +236,20 @@ var converse_api = (function(api)
 			});				
 		}
 		
-		if (location.href.indexOf("/issues/") > -1) {
+		if (location.href.indexOf("/issues/") > -1 && location.href.indexOf("/issues/new") == -1) {
+			const webcamButton = document.querySelector("#pade-webcam-button");
+			
+			if (!webcamButton) {
+				const ele = document.createElement("li");
+				ele.innerHTML = '<a id="pade-webcam-button" class="UnderlineNav-item no-wrap js-responsive-underlinenav-item js-selected-navigation-item"><img width="16" src="https://github.com/project-deserve/browser-extension/raw/main/img/logo_32.png" /><span data-content="Pade">Show Webcam</span></a>';
+				ele.classList.add("d-inline-flex");
+				menu.appendChild(ele);	
+				
+				ele.addEventListener('click', (event) => {		
+					takePhoto();			
+				});	
+			}				
+			
 			customizeIssues();
 		}
 	}
@@ -234,13 +260,34 @@ var converse_api = (function(api)
 		
 		for (identity of identities) {
 			//console.debug("customizeIssues", identity.innerText, identity.nextElementSibling?.innerText);
+
+			if (identity.innerText == "Email Address") {
+				videoHolder = identity.parentNode;	
+				const node = identity.nextElementSibling;
+				
+				if (node && node.innerHTML.startsWith("<a href=")) {
+					emailAddress = node.innerText;
+				}					
+			}
+
+			if (identity.innerText.indexOf("Patient Appointment:") > -1) {
+				const anchor = identity.querySelector('a')?.getAttribute("href");			
+				console.debug("customizeIssues", anchor);
+				id = anchor.split("/")[8];	
+			}
 			
-			if (identity.innerText == "Identity Number") {
+			if (identity.innerText == "Identity Number") {			
 				const node = identity.nextElementSibling;
 				
 				if (node && !node.innerHTML.startsWith("<a href=")) {
 					id = node.innerText;
-					node.innerHTML = `<a href="https://github.com/project-deserve/clinic-alpha-one/tree/main/Personal%20Health%20Records/${id}">${id}</a>`;
+					node.innerHTML = `<a href="https://github.com/project-deserve/clinic-alpha-one/tree/main/Personal%20Health%20Records/${id}">${id}</a>&nbsp;&nbsp;<h1><button id="print_registration">Print</button></h1>`;
+
+					const printButton = node.querySelector('#print_registration');					
+					
+					if (printButton) printButton.addEventListener('click', (event) => {		
+						printRegistration(id);
+					});
 				}
 			}
 		}
@@ -250,17 +297,28 @@ var converse_api = (function(api)
 		
 		for (h1Div of h1Divs) 
 		{			
-			if (h1Div.innerHTML == "Prescription") {
+			if (id && h1Div.innerHTML == "Prescription") {
 				const prescription = h1Div.nextElementSibling.innerText;
-				h1Div.innerHTML = `<button data-prescription="${prescription}" id="pade_prescription">Print Prescription</button>`;
+				h1Div.innerHTML = `<button data-prescription="${prescription}" id="pade_print_prescription">Print</button>&nbsp;&nbsp;<button data-prescription="${prescription}" id="pade_email_prescription">Email</button>`;
 				element = h1Div;
 			}
 		}	
 
 		if (id && element) {
-			element.addEventListener('click', (event) => {		
+			const printPrescriptionButton = element.querySelector('#pade_print_prescription');					
+			const emailPrescriptionButton = element.querySelector('#pade_email_prescription');		
+			console.debug("prescription buttons", printPrescriptionButton, emailPrescriptionButton);
+				
+			if (emailPrescriptionButton) emailPrescriptionButton.addEventListener('click', (event) => {		
+				const prescription = event.target.getAttribute("data-prescription") + "\n\n";
+				console.debug("email", prescription);
+				location.href = `mailto:${emailAddress}?subject=Project Deserve Prescription&body=${prescription}`
+			});
+			
+			
+			if (printPrescriptionButton) printPrescriptionButton.addEventListener('click', (event) => {		
 				const prescription = event.target.getAttribute("data-prescription");
-				console.debug("printing " + prescription);
+				console.debug("printing", prescription);
 				
 				if (exten.settings.pade_printer_name) {
 					JSPM.JSPrintManager.auto_reconnect = true;
@@ -284,8 +342,86 @@ var converse_api = (function(api)
 		}
 	}
 	
+	function takePhoto() {
+
+		if (location.href.indexOf("/issues/") > -1) 
+		{			
+			if (videoHolder) 
+			{
+				if (!video) {
+					video = document.createElement("video");
+					video.autoplay = true;
+					video.playsinline = true;
+					videoHolder.appendChild(video);	
+					
+					const button = document.createElement("div");
+					button.innerHTML = `<button id="pade_take_photo">Take Photo and Paste</button>`;					
+					videoHolder.appendChild(button);
+
+					button.addEventListener('click', (event) => {		
+						const track = video.srcObject.getVideoTracks()[0];
+						const imageCapture = new ImageCapture(track);
+
+						imageCapture.grabFrame().then(function (bitmap) {
+							console.debug('customizeIssues snapping bitmap', bitmap);	
+							
+							const canvas = document.createElement('canvas');
+							canvas.width = bitmap.width;
+							canvas.height = bitmap.height;	
+							
+							const context = canvas.getContext('2d');
+							context.drawImage(bitmap, 0, 0);	
+
+							canvas.toBlob(function (blob) {
+								navigator.clipboard.write([
+									new ClipboardItem({
+										'image/png': blob
+									})
+								]);	
+							});													
+						})						
+					});
+
+					navigator.mediaDevices.getUserMedia({video: true, audio: false}).then((stream) => {
+						console.debug('customizeIssues stream: ', stream, video);				
+						video.srcObject = stream;
+					})
+					.catch(error => {
+					  console.error('customizeIssues error: ', error);
+					});	
+				}					
+			}
+		}			
+	}
+	
+	function printRegistration(id) {
+		console.debug("printRegistration", exten.settings.pade_printer_name, id);
+		
+		let cpj = new JSPM.ClientPrintJob();
+		cpj.clientPrinter = new JSPM.InstalledPrinter(exten.settings.pade_printer_name);
+
+		let esc = '\x1B'; 			//ESC byte in hex notation
+		let newLine = '\x0A'; 		//LF byte in hex notation
+
+		let cmds = esc + "@"; 		//Initializes the printer (ESC @)
+		cmds += esc + '!' + '\x00'; 	
+		cmds += '-------------------------------'; 	
+		cmds += newLine;	
+		cmds += esc + '!' + '\x38'; 	//Emphasized + Double-height + Double-width mode selected (ESC ! (8 + 16 + 32)) 56 dec => 38 hex
+		cmds += 'Project Deserve'; 	
+		cmds += newLine;	
+		cmds += esc + '!' + '\x08'; 			
+		cmds += id;				
+		cmds += newLine;			
+		cmds += '-------------------------------'; 	
+		cmds += newLine + newLine;
+		
+		cpj.printerCommands = cmds;
+		cpj.sendToClient();		
+	}
+	
 	function printPrescription(id, prescription) {	
-		console.debug("testPrinter", exten.settings.pade_printer_name, id, prescription);
+		console.debug("printPrescription", exten.settings.pade_printer_name, id, prescription);
 
 		let cpj = new JSPM.ClientPrintJob();
 		cpj.clientPrinter = new JSPM.InstalledPrinter(exten.settings.pade_printer_name);

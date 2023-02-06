@@ -47,3 +47,15 @@ chrome.commands.onCommand.addListener((command) => {
 		chrome.runtime.reload();
 	}
 });	
+
+chrome.contextMenus.onClicked.addListener((info, win) => {
+	console.debug("handleRightClick", info);
+
+	chrome.tabs.query({active: true}, function(tabs){
+		console.debug("handleRightClick", tabs);		
+		chrome.tabs.sendMessage(tabs[0].id, {action: "take_photo"});  
+	});	
+});
+
+chrome.contextMenus.removeAll();
+chrome.contextMenus.create({id: "take_photo", type: "normal", title: "Show Webcam", contexts: ["all"]});			
