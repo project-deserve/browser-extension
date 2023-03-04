@@ -298,9 +298,12 @@ var converse_api = (function(api)
 		for (h1Div of h1Divs) 
 		{			
 			if (id && h1Div.innerHTML == "Prescription") {
-				const prescription = h1Div.nextElementSibling.innerText;
-				h1Div.innerHTML = `<button data-prescription="${prescription}" id="pade_print_prescription">Print</button>&nbsp;&nbsp;<button data-prescription="${prescription}" id="pade_email_prescription">Email</button>`;
-				element = h1Div;
+				const prescription = h1Div.nextElementSibling?.innerText;
+				
+				if (prescription) {
+					h1Div.innerHTML = `<button data-prescription="${prescription}" id="pade_print_prescription">Print</button>&nbsp;&nbsp;<button data-prescription="${prescription}" id="pade_email_prescription">Email</button>`;
+					element = h1Div;
+				}
 			}
 		}	
 
